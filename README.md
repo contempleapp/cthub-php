@@ -1,5 +1,6 @@
 # cthub-php
-PHP hub for Contemple [www.contemple.app](http://www.contemple.app)
+PHP hub for Contemple
+[www.contemple.app](http://www.contemple.app)
 
 CTHub works together with the contemple app to enable
 Theme installation and content Publishing on any Webserver 
@@ -13,6 +14,8 @@ Without a hub, contemple can still be used to generate a local static website wi
 - Modify cthub.php file to your server filesystem
 - Modify install.xml to handle your Theme wich can be installed from your webserver
 - upload the cthub-php folder to your webserver
+
+[www.contemple.app/docs/hub-tutorial.html](http://www.contemple.app/docs/hub-tutorial.html)
 
 ## Hub Usage:
 
