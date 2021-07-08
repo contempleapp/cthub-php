@@ -1,6 +1,6 @@
 <?php
     
-    $hub_version = "1.1";
+    $hub_version = "1.2";
 
     if( !isset($disable_upload)) $disable_upload = false;
     if( !isset($disable_password_change)) $disable_password_change = false;
@@ -36,9 +36,10 @@
          for($i=0; $i<$L; $i++)
          {
             $file = $all[$i];
-            if( strpos($file, "../") === false ) {
-                if( $file && $file != '' && $file != '.' && $file != '..' )
-                {
+           
+            if( $file && $file != '' && $file != '.' && $file != '..' )
+            {
+                if( strpos($file, "../") === false ) {
                     if( file_exists($spath.'/'.$file) ) {
                         if( $algo == 'sha256' ) {
                              $tmp .= '<f url="' . substr($spath, SERVER_PATH_LENGTH) . $file.'" c="' . hash_file("sha256", $spath.'/'.$file) . '"/>
@@ -60,6 +61,21 @@
     // Hub Actions
    if( isset($_POST['pwd']) && $_POST['pwd'] == $pwd )
    {
+        $action = '';
+        if( isset($_POST['action']) )
+        {
+            /* 
+            * Deprecated POST vars:
+            * install, lookup, update, dirinfo, src
+            * hubversion, content, latest, versions
+            * 
+            * New: 
+            * $_POST['action'] = 'install';
+            * $_POST['action'] = 'dirinfo';
+            * etc.
+            */
+            $action = $_POST['action'];
+        }
 
         // change password
         if( isset($_POST['newpwd']) ) {
@@ -74,8 +90,115 @@
             exit;
         }
 
+
+        // receive a file upload
+        if( isset($_FILES['fileToUpload']) && !$disable_upload )
+        {
+            if( strpos($_POST['path'], "../") === false && substr($_POST['path'],0,1) != '/' ) {
+
+                if( $log_activity ) {
+                    $text = "Received Upload " . $_FILES["fileToUpload"]["name"] . " path: " . $_POST['path'] . ' from ' . $_SERVER['REMOTE_ADDR'] . ' > ' . $_SERVER['HTTP_REFERER'] ;
+                }
+                
+                if( $_POST['path'] == 'cthub/sync/' && ($_FILES["fileToUpload"]["name"] == "sync.xml" || $_FILES["fileToUpload"]["name"] == "stat.xml") )
+                {
+                    $syv = 0;
+                    
+                    if( !is_dir($sync_dir) ) {
+                        mkdir( $sync_dir, 0755 );
+                    }
+                    
+                    if( $log_activity ) $text .= ' Sync-' . $syv . ' ';
+                    
+                    if( file_exists($sync_dir.$version_file) )
+                    {
+                        $systr = file_get_contents($sync_dir . $version_file);
+                        if( $systr ) {
+                            $syv = intval( $systr );
+                        }
+                    }
+                   
+                    if( $_FILES["fileToUpload"]["name"] == "sync.xml" )
+                    {
+                        // increment sync_version:
+                        $syv++;
+                        
+                        // write new sync verion to txt file
+                        file_put_contents($sync_dir.$version_file, $syv, LOCK_EX);
+                    
+                        $target_file = $sync_dir . $sync_name . $syv . '.xml' ;
+                    }
+                    else
+                    {
+                        $target_file = $sync_dir . $sync_name . $syv . '-patch.xml' ;
+                    }
+                    if( $log_activity ) $text .= ' Write content : ' . $target_dir;
+                    
+                    move_uploaded_file( $_FILES["fileToUpload"]["tmp_name"], $target_file );
+                    chmod( $target_file, 0755 );
+                    
+                }
+                else if( $_POST['path'] == 'cthub/sync/' )
+                {
+                    
+                    $target_file = $sync_dir . basename($_FILES["fileToUpload"]["name"]);
+                    move_uploaded_file( $_FILES["fileToUpload"]["tmp_name"], $target_file );
+                    chmod( $target_file, 0755 );
+                    
+                }
+                else
+                {
+                    // Receive a file upload
+                    $target_dir = $server_path;
+
+                    if(isset($_POST['path'])) $target_dir .= $_POST['path'];
+
+                    // Test if $target_dir exists or create if required ..
+
+                    if( ! is_dir($target_dir) ) {
+
+                        $pt = explode("/", $_POST['path']);
+                        if( count($pt) > 1 ) {
+                            $pth = '';
+                            if( $log_activity ) $text .= " SPLIT-PATH\n";
+                            for($i=0; $i<count($pt); $i++)
+                            {
+                                if( $pt[$i] != ".." )
+                                {
+                                    $pth .= $pt[$i] . "/";
+                                    if( $log_activity ) $text .= 'Create Directory:' .$pth . "\n";
+                                    if( !is_dir( $server_path .$pth ) ) {
+                                        mkdir( $server_path . $pth, 0755 );
+                                    }
+                                }
+                            }
+                        }else{
+                            if( $log_activity ) $text .= " ROOT-PATH\n";
+                            mkdir( $target_dir, 0755 );
+                        }
+                    }
+                    else
+                    {
+                        if( $log_activity ) $text .= " EXISTS\n";
+                    }
+
+                    $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
+                    move_uploaded_file( $_FILES["fileToUpload"]["tmp_name"], $target_file );
+                    chmod( $target_file, 0755 );
+                }
+                
+                if( $log_activity ) {
+                    file_put_contents($logfile, $text, FILE_APPEND | LOCK_EX);
+                }
+            }else{
+                 if( $log_activity ) {
+                    file_put_contents($logfile, "CRITICAL ERROR: Absolute File Path or Parenting not allowed", FILE_APPEND | LOCK_EX);
+                }
+            }
+        }
+
         // return template install information
-        if( isset($_POST['install']) )
+        if( $action == 'install' || isset($_POST['install']) )
         {
             if( file_exists($install_xml) )
             {
@@ -106,11 +229,12 @@
                 }
                 
               echo '</templates></ct>';
-            } 
+            }
+            exit;
         }
 
          // return file exists information of website files
-        if ( isset($_POST['lookup']) && isset($_POST['file']) )
+        if ( $action == 'lookup' || isset($_POST['lookup']) && isset($_POST['file']) )
         {
             if( strpos($_POST['file'], "../") == false )
             {
@@ -126,7 +250,7 @@
         }
         
         // return template update information
-        if ( isset($_POST['update']) && isset($_POST['name']) )
+        if ( ($action == 'update' || isset($_POST['update'])) && isset($_POST['name']) )
         {
             if ( file_exists($install_xml) )
             {
@@ -162,11 +286,12 @@
                 
               echo '</ct>
 ';
-            } 
+            }
+            exit;
         }
 
         // return file hash infos
-        if( isset($_POST['dirinfo']) )
+        if( $action == 'dirinfo' || isset($_POST['dirinfo']) )
         {
             if( !$disable_upload ) {
                // header('Content-type: text/xml');
@@ -180,15 +305,14 @@
                     file_put_contents($logfile, 'Send Dir-Info '.$_SERVER['REMOTE_ADDR'] . ' > ' . $_SERVER['HTTP_REFERER'] . "\n", FILE_APPEND | LOCK_EX);
                 }
                 echo $text;
-                exit;
             }else{
                 echo 'disabled';
-                exit;
             }
+            exit;
         }
 
         // get theme zip file from theme name
-        if( isset($_POST['src']) && isset($_POST['name']) )
+        if( ($action == 'src' || isset($_POST['src'])) && isset($_POST['name']) )
         {
            if (file_exists($install_xml) )
             {
@@ -230,21 +354,20 @@
 
                         break;
                     }
-                }
-                
-                exit;
-            } 
+                }   
+            }
+            exit;
         }
        
         // Get hub version
-        if( isset($_POST['hubversion']) )
+        if( $action == 'hubversion' || isset($_POST['hubversion']) )
         {
             echo $hub_version;
             exit;
         }
        
         // Get latest sync content (xml content)
-        if( isset($_POST['content']) )
+        if( $action == 'content' || isset($_POST['content']) )
         {
             if( isset($_POST['version']) )
             {
@@ -268,10 +391,11 @@
             }else{
                 echo 'not-found';
             }
+            exit;
         }
        
         // Get latest content version (integer)
-        if( isset($_POST['latest']) )
+        if( $action == 'latest' || isset($_POST['latest']) )
         {
             if( file_exists($sync_dir.$version_file) ) {
                 $systr = file_get_contents($sync_dir.$version_file);
@@ -285,7 +409,7 @@
         }
        
         // Get available content versions as comma separated integer list
-        if( isset($_POST['versions']) )
+        if( $action == 'versions' || isset($_POST['versions']) )
         {
             if( is_dir($sync_dir) )
             {
@@ -310,104 +434,6 @@
             exit;  
         }
         
-        // receive a file upload
-        if( isset($_FILES['fileToUpload']) && !$disable_upload )
-        {
-            if( $log_activity ) {
-                $text = "Received Upload " . $_FILES["fileToUpload"]["name"] . " path: " . $_POST['path'] . ' from ' . $_SERVER['REMOTE_ADDR'] . ' > ' . $_SERVER['HTTP_REFERER'] ;
-            }
-            
-            if( $_POST['path'] == 'cthub/sync/' && ($_FILES["fileToUpload"]["name"] == "sync.xml" || $_FILES["fileToUpload"]["name"] == "stat.xml") )
-            {
-                $syv = 0;
-                
-                if( !is_dir($sync_dir) ) {
-                    mkdir( $sync_dir, 0755 );
-                }
-                
-                if( $log_activity ) $text .= ' Sync-' . $syv . ' ';
-                
-                if( file_exists($sync_dir.$version_file) )
-                {
-                    $systr = file_get_contents($sync_dir . $version_file);
-                    if( $systr ) {
-                        $syv = intval( $systr );
-                    }
-                }
-               
-                if( $_FILES["fileToUpload"]["name"] == "sync.xml" )
-                {
-                    // increment sync_version:
-                    $syv++;
-                    
-                    // write new sync verion to txt file
-                    file_put_contents($sync_dir.$version_file, $syv, LOCK_EX);
-                
-                    $target_file = $sync_dir . $sync_name . $syv . '.xml' ;
-                }
-                else
-                {
-                    $target_file = $sync_dir . $sync_name . $syv . '-patch.xml' ;
-                }
-                if( $log_activity ) $text .= ' Write content : ' . $target_dir;
-                
-                move_uploaded_file( $_FILES["fileToUpload"]["tmp_name"], $target_file );
-                chmod( $target_file, 0755 );
-                
-            }
-            else if( $_POST['path'] == 'cthub/sync/' )
-            {
-                
-                $target_file = $sync_dir . basename($_FILES["fileToUpload"]["name"]);
-                move_uploaded_file( $_FILES["fileToUpload"]["tmp_name"], $target_file );
-                chmod( $target_file, 0755 );
-                
-            }
-            else
-            {
-                // Receive a file upload
-                $target_dir = $server_path;
-
-                if(isset($_POST['path'])) $target_dir .= $_POST['path'];
-
-                // Test if $target_dir exists or create if required ..
-
-                if( ! is_dir($target_dir) ) {
-
-                    $pt = explode("/", $_POST['path']);
-                    if( count($pt) > 1 ) {
-                        $pth = '';
-                        if( $log_activity ) $text .= " SPLIT-PATH\n";
-                        for($i=0; $i<count($pt); $i++)
-                        {
-                            if( $pt[$i] != ".." )
-                            {
-                                $pth .= $pt[$i] . "/";
-                                if( $log_activity ) $text .= 'Create Directory:' .$pth . "\n";
-                                if( !is_dir( $server_path .$pth ) ) {
-                                    mkdir( $server_path . $pth, 0755 );
-                                }
-                            }
-                        }
-                    }else{
-                        if( $log_activity ) $text .= " ROOT-PATH\n";
-                        mkdir( $target_dir, 0755 );
-                    }
-                }
-                else
-                {
-                    if( $log_activity ) $text .= " EXISTS\n";
-                }
-
-                $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
-                move_uploaded_file( $_FILES["fileToUpload"]["tmp_name"], $target_file );
-                chmod( $target_file, 0755 );
-            }
-            
-            if( $log_activity ) {
-                file_put_contents($logfile, $text, FILE_APPEND | LOCK_EX);
-            }
-        }
        
     }
     else
