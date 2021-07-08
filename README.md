@@ -11,15 +11,20 @@ Without a hub, contemple can still be used to generate a local static website wi
 
 - Copy your theme.zip file into the cthub-php folder
 - Modify cthub.php file to your server filesystem
-- Modify install.xml to handle your Theme(s) wich can be installed from your webserver
+- Modify install.xml to handle your Theme wich can be installed from your webserver
 - upload the cthub-php folder to your webserver
 
 ## Hub Usage:
 
-After the installtion is done, anybody can use the contemple app to connect to your server and publish new content
+After the installtion is done, anybody can use the contemple app to connect to your website, install your website theme and publish new content on your website
 - Start the contemple app
-- Enter the path to cthub-phpfolder and cthub.php script: eg: https://mywebsite.com/cthub-php/
+- Enter the path to cthub-php folder and cthub.php script: eg: https://mywebsite.com/cthub-php/
 - Contemple should find and install the Theme found on the server
+
+## Update Contemple Hub on existing webserver
+
+If you already installed an older version on your webserver,
+just upload the *hub.php* file from the latest version to your webserver
 
 
 
