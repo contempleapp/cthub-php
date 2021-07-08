@@ -25,8 +25,6 @@
     // Split and concat files to upload large files
     // $splitLargeFiles = true;
 
-    define ('SERVER_PATH_LENGTH', strlen($server_path) );
-
     function listFilelist ( $spath, $filelist )
     {
          $all = explode( ",", $filelist );
@@ -37,18 +35,18 @@
          {
             $file = $all[$i];
            
-            if( $file && $file != '' && $file != '.' && $file != '..' )
+            if( $file && $file != '.' && $file != '..' )
             {
                 if( strpos($file, "../") === false ) {
                     if( file_exists($spath.'/'.$file) ) {
                         if( $algo == 'sha256' ) {
-                             $tmp .= '<f url="' . substr($spath, SERVER_PATH_LENGTH) . $file.'" c="' . hash_file("sha256", $spath.'/'.$file) . '"/>
+                             $tmp .= '<f url="' . $file.'" c="' . hash_file("sha256", $spath.'/'.$file) . '"/>
     ';
                         }else if( $algo == 'sha224' ) {
-                             $tmp .= '<f url="' . substr($spath, SERVER_PATH_LENGTH) . $file.'" c="' . hash_file("sha224", $spath.'/'.$file) . '"/>
+                             $tmp .= '<f url="' . $file.'" c="' . hash_file("sha224", $spath.'/'.$file) . '"/>
     ';
                         }else{
-                             $tmp .= '<f url="' . substr($spath, SERVER_PATH_LENGTH) . $file.'" c="' . md5_file($spath.'/'.$file) . '"/>
+                             $tmp .= '<f url="' . $file.'" c="' . md5_file($spath.'/'.$file) . '"/>
     ';
                         }
                     }
