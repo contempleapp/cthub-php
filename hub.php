@@ -195,6 +195,8 @@
                     file_put_contents($logfile, "CRITICAL ERROR: Absolute File Path or Parenting not allowed", FILE_APPEND | LOCK_EX);
                 }
             }
+            echo "";
+            exit;  
         }
 
         // return template install information

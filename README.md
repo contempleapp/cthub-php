@@ -30,6 +30,10 @@ If you already installed an older version on your webserver,
 just upload the *hub.php* file from the latest version to your webserver
 
 
+## Version 1.2 Update Notes
 
+- Version 1.2 introduces a new API for interacting with the hub
+- Version 1.2 also fixes some security issues with File Uploads, all users should upgrade to the latest version of cthub-php
+- Version 1.2 is fully compatible with all versions of the Contemple app
 
 
