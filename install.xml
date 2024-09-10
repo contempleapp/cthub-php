@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ct>
 	<templates 
-            projectName="the YourDomain Website" 
+		projectName="Demo Website" 
 		verboseMode = "false" 
-            debugOutput = "true" 
-		appName = "YourDomain-CMS" 
+		debugOutput = "true" 
+		appName = "Demo Theme" 
 		version = "1.0.0" 
 		installTemplate = "current" 
 		updateUrl = "" >
-        
-	    <template name="YourDomain Website" 
-                  src="https://www.yourdomain.com/cthub/theme-1.0.0.zip" 
+        	<!--Template name attribute may not contain any special characters or whitespaces -->
+		<template name="Demo-Website" 
+                  src="./theme-1.0.0.zip" 
                   version = "1.0.0" 
                   date="01-01-2020" 
                   localUploadFolder="min" 
                   homeAreaName="Home" 
-                  uploadScript="https://www.yourdomain.com/cthub/cthub.php" />
+                  uploadScript="https://www.yourdomain.com/cthub/cthub.php"
+		/>
     </templates>
 </ct>
