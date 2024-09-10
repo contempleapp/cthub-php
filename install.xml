@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ct>
-	<templates 
-		projectName="Demo Website" 
-		verboseMode = "false" 
-		debugOutput = "true" 
-		appName = "Demo Theme" 
-		version = "1.0.0" 
-		installTemplate = "current" 
-		updateUrl = "" >
+	<templates>
         	<!--
 		The template name attribute may not contain any special characters or whitespaces
 		and have to match the name from the config.xml of the theme
 		-->
-		<template name="Demo-Website" 
+		<template name="app.contemple.demo" 
                   src="./theme-1.0.0.zip" 
                   version = "1.0.0" 
                   date="01-01-2020" 
