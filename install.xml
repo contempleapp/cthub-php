@@ -8,7 +8,10 @@
 		version = "1.0.0" 
 		installTemplate = "current" 
 		updateUrl = "" >
-        	<!--Template name attribute may not contain any special characters or whitespaces -->
+        	<!--
+		The template name attribute may not contain any special characters or whitespaces
+		and have to match the name from the config.xml of the theme
+		-->
 		<template name="Demo-Website" 
                   src="./theme-1.0.0.zip" 
                   version = "1.0.0" 
